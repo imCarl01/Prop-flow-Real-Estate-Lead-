@@ -554,9 +554,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const PASSWORD = 'realestate2026';
-  const SHEET_ID = '15TjY4Raz5q9pN4z_8bSSCzq9WZDw5SYnygxXEgWaTVE';
-  const API_KEY = 'AIzaSyCKwkct6hm6TKZ9y0ttEhD-oMCoKcjsFcQ';
+  const PASSWORD = process.env.PASSWORD;
+  const SHEET_ID = process.env.SHEET_ID;
+  const API_KEY = process.env.API_KEY;
   let allLeads = [];
   let currentFilter = 'ALL';
   let contactedLeads = JSON.parse(localStorage.getItem('contacted_leads') || '{}');

@@ -543,7 +543,7 @@
 </footer>
 
 <script>
-  const WEBHOOK_URL = 'http://localhost:5678/webhook-test/b742c263-89eb-4d3b-a75b-1a0dcb341a20';
+  const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
   function updateBudget(val) {
     const formatted = '$' + Number(val).toLocaleString();
