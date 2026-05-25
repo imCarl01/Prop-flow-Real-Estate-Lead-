@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PropFlow — Find Your Property</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: #1e1e2e;
+    --text: #e8e8f0;
+    --muted: #4a4a6a;
+    --green: #37F25D;
+    --purple: #8A5DEE;
+    --blue: #1A0BBE;
+    --hot: #ff4d6d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(138,93,238,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(138,93,238,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow */
+  .glow-top {
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 400px;
+    background: radial-gradient(circle, rgba(138,93,238,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: relative;
+    z-index: 10;
+    padding: 1.5rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo { font-size: 1.4rem; font-weight: 800; letter-spacing: -1px; }
+  .nav-logo span { color: var(--green); }
+  .nav-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.8rem;
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 4rem 2rem 3rem;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    background: rgba(138,93,238,0.1);
+    border: 1px solid rgba(138,93,238,0.2);
+    color: var(--purple);
+    padding: 0.4rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+
+  .hero h1 span { color: var(--green); }
+
+  .hero-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--muted);
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* FORM */
+  .form-wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 2rem 5rem;
+    width: 100%;
+  }
+
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--purple), var(--green));
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .form-group.full { grid-column: span 2; }
+
+  .form-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .form-input, .form-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.9rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    appearance: none;
+  }
+
+  .form-input:focus, .form-select:focus { border-color: var(--purple); }
+  .form-input::placeholder { color: var(--muted); }
+
+  .select-wrapper { position: relative; }
+  .select-arrow {
+    position: absolute;
+    right: 1rem; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    font-size: 0.7rem;
+  }
+
+  .form-select option { background: var(--surface); }
+
+  /* BUDGET SLIDER */
+  .budget-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.2rem;
+    color: var(--green);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    outline: none;
+    border-radius: 2px;
+    appearance: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--green);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+  }
+
+  /* DIVIDER */
+  .form-divider {
+    grid-column: span 2;
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.5rem 0;
+  }
+
+  .form-section-title {
+    grid-column: span 2;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--purple);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
+  /* SUBMIT */
+  .form-submit {
+    grid-column: span 2;
+    background: var(--green);
+    color: var(--bg);
+    border: none;
+    padding: 1.1rem;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 0.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+  .form-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .form-note {
+    grid-column: span 2;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* SUCCESS STATE */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+
+  .success-icon {
+    width: 64px; height: 64px;
+    background: rgba(55,242,93,0.1);
+    border: 1px solid rgba(55,242,93,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 1.5rem;
+  }
+
+  .success-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 0.5rem;
+  }
+
+  .success-title span { color: var(--green); }
+
+  .success-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 350px;
+    margin: 0 auto 2rem;
+  }
+
+  .success-detail {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    text-align: left;
+    margin-bottom: 1.5rem;
+  }
+
+  .success-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(30,30,46,0.5);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+  }
+
+  .success-detail-row:last-child { border-bottom: none; }
+  .success-detail-key { color: var(--muted); }
+  .success-detail-val { color: var(--text); }
+
+  .submit-another {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.8rem 1.5rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .submit-another:hover { border-color: var(--green); color: var(--green); }
+
+  /* ERROR */
+  .form-error {
+    grid-column: span 2;
+    background: rgba(255,77,109,0.08);
+    border: 1px solid rgba(255,77,109,0.2);
+    color: var(--hot);
+    padding: 0.8rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    display: none;
+  }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-text { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+  .footer-link { color: var(--green); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    nav { padding: 1rem 1.5rem; }
+    .hero { padding: 3rem 1.5rem 2rem; }
+    .form-wrapper { padding: 0 1rem 3rem; }
+    .form-card { padding: 1.5rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full, .form-divider, .form-section-title, .form-submit, .form-note, .form-error { grid-column: span 1; }
+    footer { padding: 1rem 1.5rem; flex-direction: column; gap: 0.5rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-top"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Prop<span>Flow</span></div>
+  <div class="nav-tag">Property Inquiry</div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Find Your Perfect Property</div>
+  <h1>Let's Find Your<br><span>Dream Home.</span></h1>
+  <p class="hero-sub">Fill in your details below and our team will match you with the best properties based on your needs.</p>
+</div>
+
+<!-- FORM -->
+<div class="form-wrapper">
+  <div class="form-card">
+
+    <!-- FORM STATE -->
+    <div id="formState">
+      <div class="form-grid">
+
+        <div class="form-section-title">Personal Information</div>
+
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input type="text" class="form-input" id="firstName" placeholder="John" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input type="text" class="form-input" id="lastName" placeholder="Doe" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" id="email" placeholder="john@email.com" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="tel" class="form-input" id="phone" placeholder="+234 000 000 0000" required />
+        </div>
+
+        <hr class="form-divider" />
+        <div class="form-section-title">Property Preferences</div>
+
+        <div class="form-group full">
+          <label class="form-label">Budget — <span id="budgetDisplay" style="color:var(--green)">$25,000</span></label>
+          <input type="range" id="budgetSlider" min="5000" max="500000" step="5000" value="25000" oninput="updateBudget(this.value)" />
+          <div class="range-labels"><span>$5,000</span><span>$500,000+</span></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Property Type</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="propertyType">
+              <option value="">Select type</option>
+              <option value="Apartment">Apartment</option>
+              <option value="House">House</option>
+              <option value="Duplex">Duplex</option>
+              <option value="Bungalow">Bungalow</option>
+              <option value="Land">Land</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Office Space">Office Space</option>
+            </select>
+            <span class="select-arrow">▼</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Timeline</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="timeline">
+              <option value="">Select timeline</option>
+              <option value="1-3 months">1-3 months</option>
+              <option value="3-6 months">3-6 months</option>
+              <option value="6-12 months">6-12 months</option>
+              <option value="12+ months">12+ months</option>
+              <option value="Just browsing">Just browsing</option>
+            </select>
+            <span class="select-arrow">▼</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Bedrooms</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="bedrooms">
+              <option value="">Select</option>
+              <option value="1">1 Bedroom</option>
+              <option value="2">2 Bedrooms</option>
+              <option value="3">3 Bedrooms</option>
+              <option value="4">4 Bedrooms</option>
+              <option value="5+">5+ Bedrooms</option>
+            </select>
+            <span class="select-arrow">▼</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Purpose</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="purpose">
+              <option value="">Select</option>
+              <option value="Buy">Buy</option>
+              <option value="Rent">Rent</option>
+              <option value="Investment">Investment</option>
+            </select>
+            <span class="select-arrow">▼</span>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Additional Notes (Optional)</label>
+          <input type="text" class="form-input" id="notes" placeholder="Any specific requirements..." />
+        </div>
+
+        <div class="form-error" id="formError">⚠ Please fill in all required fields.</div>
+
+        <button class="form-submit" id="submitBtn" onclick="submitForm()">
+          Submit Inquiry →
+        </button>
+
+        <div class="form-note">
+          By submitting this form you agree to be contacted by our team regarding your property inquiry. 
+          Your information is kept private and never shared. — <a href="https://ncuagency.com" style="color:var(--green)">NCU Agency</a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div class="success-screen" id="successState">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Inquiry <span>Received!</span></div>
+      <p class="success-sub">Our team has been notified and will reach out to you shortly with properties that match your needs.</p>
+
+      <div class="success-detail" id="successDetail"></div>
+
+      <button class="submit-another" onclick="resetForm()">Submit Another Inquiry</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-text">Powered by <a href="https://ncuagency.com" class="footer-link">NCU Agency</a></div>
+  <div class="footer-text">Built with automation & AI</div>
+</footer>
+
+<script>
+  const WEBHOOK_URL = 'http://localhost:5678/webhook-test/b742c263-89eb-4d3b-a75b-1a0dcb341a20';
+
+  function updateBudget(val) {
+    const formatted = '$' + Number(val).toLocaleString();
+    document.getElementById('budgetDisplay').textContent = formatted;
+  }
+
+  async function submitForm() {
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const budget = document.getElementById('budgetSlider').value;
+    const propertyType = document.getElementById('propertyType').value;
+    const timeline = document.getElementById('timeline').value;
+    const bedrooms = document.getElementById('bedrooms').value;
+    const purpose = document.getElementById('purpose').value;
+    const notes = document.getElementById('notes').value.trim();
+
+    const errorEl = document.getElementById('formError');
+    errorEl.style.display = 'none';
+
+    if (!firstName || !lastName || !email || !phone || !propertyType || !timeline || !purpose) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = '⚠ Please fill in all required fields.';
+      return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    const payload = {
+      name: `${firstName} ${lastName}`,
+      email,
+      phone,
+      budget,
+      timeline,
+      property_type: propertyType,
+      bedrooms,
+      purpose,
+      notes,
+      submitted_at: new Date().toISOString()
+    };
+
+    try {
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      // Show success
+      document.getElementById('formState').style.display = 'none';
+      document.getElementById('successState').style.display = 'block';
+
+      document.getElementById('successDetail').innerHTML = `
+        <div class="success-detail-row"><span class="success-detail-key">Name</span><span class="success-detail-val">${firstName} ${lastName}</span></div>
+        <div class="success-detail-row"><span class="success-detail-key">Email</span><span class="success-detail-val">${email}</span></div>
+        <div class="success-detail-row"><span class="success-detail-key">Budget</span><span class="success-detail-val">$${Number(budget).toLocaleString()}</span></div>
+        <div class="success-detail-row"><span class="success-detail-key">Property</span><span class="success-detail-val">${propertyType}</span></div>
+        <div class="success-detail-row"><span class="success-detail-key">Timeline</span><span class="success-detail-val">${timeline}</span></div>
+        <div class="success-detail-row"><span class="success-detail-key">Purpose</span><span class="success-detail-val">${purpose}</span></div>
+      `;
+
+    } catch (err) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = '⚠ Submission failed. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Submit Inquiry →';
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('formState').style.display = 'block';
+    document.getElementById('successState').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = 'Submit Inquiry →';
+    document.getElementById('firstName').value = '';
+    document.getElementById('lastName').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('notes').value = '';
+    document.getElementById('budgetSlider').value = 25000;
+    document.getElementById('budgetDisplay').textContent = '$25,000';
+    document.getElementById('propertyType').value = '';
+    document.getElementById('timeline').value = '';
+    document.getElementById('bedrooms').value = '';
+    document.getElementById('purpose').value = '';
+  }
+</script>
+</body>
+</html>
